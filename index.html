@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UniConvert</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#f2f5f9; margin:0; padding:16px; }
+  .card { max-width:420px; margin:auto; background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,.12); }
+  h1 { text-align:center; font-size:22px; margin:0 0 16px; color:#0a5; }
+  label { display:block; margin:12px 0 4px; font-size:15px; color:#444; }
+  select, input { width:100%; padding:12px; font-size:17px; border:1px solid #bbb; border-radius:10px; box-sizing:border-box; }
+  button { width:100%; margin-top:12px; padding:10px; font-size:16px; border:none; border-radius:10px; background:#e3e8ee; }
+  .result { margin-top:16px; padding:16px; text-align:center; font-size:26px; font-weight:bold; color:#0a7d2c; background:#eaf8ef; border-radius:12px; word-break:break-all; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>UniConvert - محوّل الوحدات</h1>
+
+  <label>نوع القياس</label>
+  <select id="category"></select>
+
+  <label>من وحدة</label>
+  <select id="from"></select>
+
+  <button id="swap">⇅ تبديل الوحدتين</button>
+
+  <label>إلى وحدة</label>
+  <select id="to"></select>
+
+  <label>اكتبي الرقم</label>
+  <input id="value" type="number" inputmode="decimal" value="1">
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+const CATEGORIES = {
+  "الطول": { "متر (m)":1, "سنتيمتر (cm)":0.01, "ملليمتر (mm)":0.001, "كيلومتر (km)":1000, "بوصة (inch)":0.0254, "قدم (foot)":0.3048, "ميل (mile)":1609.344 },
+  "الكتلة (الوزن)": { "كيلوجرام (kg)":1, "جرام (g)":0.001, "ملليجرام (mg)":0.000001, "طن (ton)":1000, "رطل (pound)":0.45359237, "أونصة (ounce)":0.028349523 },
+  "المساحة": { "متر مربع (m²)":1, "سنتيمتر مربع (cm²)":0.0001, "كيلومتر مربع (km²)":1000000, "هكتار (hectare)":10000, "فدان (feddan)":4200.83 },
+  "الحجم": { "متر مكعب (m³)":1, "لتر (L)":0.001, "مليلتر (mL)":0.000001, "سنتيمتر مكعب (cm³)":0.000001 },
+  "الضغط": { "باسكال = نيوتن/متر مربع (Pa)":1, "كيلوباسكال (kPa)":1000, "ضغط جوي (atm)":101325, "بار (bar)":100000, "ملم زئبق (mmHg)":133.322, "رطل/بوصة مربعة (psi)":6894.757 },
+  "القوة": { "نيوتن (N)":1, "كيلونيوتن (kN)":1000, "داين (dyne)":0.00001, "كيلوجرام قوة (kgf)":9.80665 },
+  "الطاقة": { "جول (J)":1, "كيلوجول (kJ)":1000, "سعر حراري (cal)":4.184, "كيلو سعر (kcal)":4184, "كيلوواط ساعة (kWh)":3600000 },
+  "الزمن": { "ثانية (s)":1, "دقيقة (min)":60, "ساعة (hour)":3600, "يوم (day)":86400 },
+  "السرعة": { "متر/ثانية (m/s)":1, "كيلومتر/ساعة (km/h)":1/3.6, "ميل/ساعة (mph)":0.44704 },
+  "درجة الحرارة": { "سيلزيوس (°C)":0, "فهرنهايت (°F)":0, "كلفن (K)":0 }
+};
+
+const cat = document.getElementById("category");
+const from = document.getElementById("from");
+const to = document.getElementById("to");
+const val = document.getElementById("value");
+const res = document.getElementById("result");
+
+function fill(select, items) {
+  select.innerHTML = "";
+  items.forEach(name => { const o = document.createElement("option"); o.textContent = name; select.appendChild(o); });
+}
+
+function toKelvin(v, unit) {
+  if (unit.includes("°C")) return v + 273.15;
+  if (unit.includes("°F")) return (v - 32) * 5 / 9 + 273.15;
+  return v;
+}
+function fromKelvin(k, unit) {
+  if (unit.includes("°C")) return k - 273.15;
+  if (unit.includes("°F")) return (k - 273.15) * 9 / 5 + 32;
+  return k;
+}
+
+function calc() {
+  const v = parseFloat(val.value);
+  if (isNaN(v)) { res.textContent = "اكتبي رقماً صحيحاً"; return; }
+  let r;
+  if (cat.value === "درجة الحرارة") {
+    r = fromKelvin(toKelvin(v, from.value), to.value);
+  } else {
+    const f = CATEGORIES[cat.value];
+    r = v * f[from.value] / f[to.value];
+  }
+  res.textContent = Number(r.toPrecision(10)).toString();
+}
+
+function onCategory() {
+  const units = Object.keys(CATEGORIES[cat.value]);
+  fill(from, units);
+  fill(to, units);
+  to.selectedIndex = units.length > 1 ? 1 : 0;
+  calc();
+}
+
+fill(cat, Object.keys(CATEGORIES));
+cat.addEventListener("change", onCategory);
+from.addEventListener("change", calc);
+to.addEventListener("change", calc);
+val.addEventListener("input", calc);
+document.getElementById("swap").addEventListener("click", () => {
+  const a = from.selectedIndex; from.selectedIndex = to.selectedIndex; to.selectedIndex = a; calc();
+});
+onCategory();
+</script>
+</body>
+</html>
