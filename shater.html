@@ -1,0 +1,2083 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاطر | بنك أسئلة الصف الأول الثانوي</title>
+    <!-- تحميل مكتبة Tailwind CSS للتصميم -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- تحميل خط Cairo و Tajawal للغة العربية -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- مكتبة الأيقونات Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- مكتبة Confetti للاحتفال -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            background-color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        /* حركات مخصصة للبطاقات والأزرار */
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* حركة اهتزاز عند الإجابة الخاطئة */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* حركة نبض للكوينز */
+        @keyframes coinBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3) rotate(10deg); }
+        }
+        .coin-pop {
+            animation: coinBounce 0.5s ease-out;
+        }
+
+        /* تنسيق النصوص الإنجليزية داخل الأسئلة */
+        .ltr-text {
+            direction: ltr;
+            unicode-bidi: isolate;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- الشريط العلوي (Header) -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+            <!-- الشعار وزر العودة للرئيسية -->
+            <button onclick="goHome()" class="flex items-center gap-3 group focus:outline-none">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-hover:scale-105 transition-transform">
+                    <i data-lucide="graduation-cap" class="w-6 h-6 sm:w-7 sm:h-7"></i>
+                </div>
+                <div class="text-right">
+                    <h1 class="font-extrabold text-lg sm:text-xl text-slate-900 leading-tight">شاطر</h1>
+                    <p class="text-xs text-slate-500 font-medium">الصف الأول الثانوي • المنهج المصري</p>
+                </div>
+            </button>
+
+            <!-- أدوات التحكم: الصوت وعداد الكوينز -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <!-- زر كتم/تشغيل الصوت -->
+                <button id="soundToggleBtn" onclick="toggleSound()" title="تشغيل/كتم الصوت" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+                    <i id="soundIcon" data-lucide="volume-2" class="w-5 h-5"></i>
+                </button>
+
+                <!-- عداد الكوينز -->
+                <div id="coinBadge" class="flex items-center gap-2 bg-gradient-to-r from-amber-50 to-yellow-100 border border-amber-300 px-3.5 py-2 sm:px-4 sm:py-2 rounded-2xl shadow-sm">
+                    <div class="w-7 h-7 rounded-full bg-amber-400 flex items-center justify-center text-amber-950 font-black shadow-inner text-sm">
+                        $
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-amber-800 font-bold leading-none">رصيدك</span>
+                        <span id="totalCoinsDisplay" class="font-black text-base sm:text-lg text-amber-900 leading-tight">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- المحتوى الرئيسي للتطبيق -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
+
+        <!-- 1. شاشة اختيار المادة الدراسية (Home View) -->
+        <section id="subjectsView" class="space-y-8 animate-fade-in">
+            <!-- بانر ترحيبي -->
+            <div class="bg-gradient-to-l from-indigo-600 via-indigo-700 to-violet-800 rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 max-w-2xl space-y-3">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-indigo-100 text-xs sm:text-sm font-bold backdrop-blur-sm">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+                        تحدي شاطر - أولى ثانوي
+                    </span>
+                    <h2 class="text-2xl sm:text-4xl font-black leading-snug">
+                        جاهز تختبر معلوماتك مع شاطر وتجمع أكبر عدد من الكوينز؟
+                    </h2>
+                    <p class="text-indigo-100 text-sm sm:text-base leading-relaxed">
+                        اختر المادة الدراسية، ثم اختر الفرع أو الوحدة، ثم حدد الدرس، وأجب على الأسئلة. كل إجابة صحيحة تمنحك <strong class="text-amber-300">5 كوينات</strong> مع شرح وافٍ لكل سؤال!
+                    </p>
+                </div>
+                <!-- زخرفة خلفية -->
+                <div class="absolute -left-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute left-12 top-6 opacity-20 hidden md:block pointer-events-none">
+                    <i data-lucide="trophy" class="w-36 h-36 text-amber-300"></i>
+                </div>
+            </div>
+
+            <!-- عنوان القسم -->
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+                    <span class="w-2 h-7 bg-indigo-600 rounded-full inline-block"></span>
+                    اختر المادة الدراسية
+                </h3>
+                <span class="text-xs sm:text-sm text-slate-500 font-semibold">3 مواد متاحة</span>
+            </div>
+
+            <!-- شبكة بطاقات المواد -->
+            <div id="subjectsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- يتم ملؤها ديناميكياً بواسطة JavaScript -->
+            </div>
+        </section>
+
+        <!-- 2. شاشة اختيار الفرع / الوحدة (Branches View) -->
+        <section id="branchesView" class="hidden space-y-6">
+            <!-- شريط مسار التنقل (Breadcrumb) -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <nav class="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-500">
+                    <button onclick="goHome()" class="hover:text-indigo-600 transition-colors flex items-center gap-1">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        المواد
+                    </button>
+                    <i data-lucide="chevron-left" class="w-4 h-4 text-slate-400"></i>
+                    <span id="branchBreadcrumbSubject" class="text-indigo-700 font-extrabold">المادة</span>
+                </nav>
+                <button onclick="goHome()" class="flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 font-bold text-xs sm:text-sm transition-colors px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50">
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    تغيير المادة
+                </button>
+            </div>
+
+            <div class="space-y-1.5">
+                <h3 id="branchesViewTitle" class="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+                    <span class="w-2 h-7 bg-indigo-600 rounded-full inline-block"></span>
+                    اختر الفرع الدراسي
+                </h3>
+                <p class="text-slate-500 text-sm">حدد الفرع أو الوحدة لعرض الدروس المقررة والتدريب عليها</p>
+            </div>
+
+            <!-- شبكة الفروع -->
+            <div id="branchesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- يتم ملؤها ديناميكياً -->
+            </div>
+        </section>
+
+        <!-- 3. شاشة اختيار الدرس داخل الفرع (Lessons View) -->
+        <section id="lessonsView" class="hidden space-y-6">
+            <!-- شريط مسار التنقل (Breadcrumb) -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <nav class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-500">
+                    <button onclick="goHome()" class="hover:text-indigo-600 transition-colors flex items-center gap-1">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        المواد
+                    </button>
+                    <i data-lucide="chevron-left" class="w-4 h-4 text-slate-400"></i>
+                    <button onclick="backToBranches()" id="lessonBreadcrumbSubject" class="hover:text-indigo-600 transition-colors">
+                        المادة
+                    </button>
+                    <i data-lucide="chevron-left" class="w-4 h-4 text-slate-400"></i>
+                    <span id="lessonBreadcrumbBranch" class="text-indigo-700 font-extrabold">الفرع</span>
+                </nav>
+                <button onclick="backToBranches()" class="flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 font-bold text-xs sm:text-sm transition-colors px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50">
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    العودة للفروع
+                </button>
+            </div>
+
+            <div class="space-y-1.5">
+                <h3 id="lessonsViewHeading" class="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+                    <span class="w-2 h-7 bg-indigo-600 rounded-full inline-block"></span>
+                    اختر الدرس للتدريب
+                </h3>
+                <p class="text-slate-500 text-sm">جميع الأسئلة مصممة وفق نظام التقييم الحديث للصف الأول الثانوي</p>
+            </div>
+
+            <!-- قائمة الدروس -->
+            <div id="lessonsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- يتم ملؤها ديناميكياً -->
+            </div>
+        </section>
+
+        <!-- 4. شاشة الأسئلة التفاعلية (Quiz View) -->
+        <section id="quizView" class="hidden max-w-3xl mx-auto space-y-6">
+            <!-- شريط مسار التنقل العلوي -->
+            <div class="bg-white px-4 py-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-500">
+                <nav class="flex flex-wrap items-center gap-1.5">
+                    <button onclick="goHome()" class="hover:text-indigo-600">المواد</button>
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <button onclick="backToBranches()" id="quizBreadcrumbSubject" class="hover:text-indigo-600">المادة</button>
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <button onclick="backToLessons()" id="quizBreadcrumbBranch" class="hover:text-indigo-600">الفرع</button>
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span class="text-indigo-700 font-extrabold">الاختبار</span>
+                </nav>
+                <button onclick="backToLessons()" class="flex items-center gap-1 text-rose-600 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-colors">
+                    <i data-lucide="x-circle" class="w-4 h-4"></i>
+                    خروج
+                </button>
+            </div>
+
+            <!-- شريط معلومات الاختبار والتقدم -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                    <span id="quizLessonTitle" class="font-extrabold text-sm sm:text-base text-slate-800 truncate">
+                        اسم الدرس
+                    </span>
+                    <div class="flex items-center gap-1.5 text-amber-700 font-extrabold text-xs sm:text-sm bg-amber-50 px-3 py-1 rounded-full border border-amber-200 shrink-0">
+                        <i data-lucide="coins" class="w-4 h-4"></i>
+                        <span>+<span id="sessionCoinsDisplay">0</span></span>
+                    </div>
+                </div>
+
+                <!-- شريط التقدم -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-xs font-bold text-slate-500">
+                        <span>السؤال <span id="currentQuestionNum" class="text-indigo-600">1</span> من <span id="totalQuestionsNum">10</span></span>
+                        <span id="progressPercent">10%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="progressBar" class="h-full bg-gradient-to-l from-indigo-600 to-violet-500 rounded-full transition-all duration-500" style="width: 10%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- بطاقة السؤال والخيارات -->
+            <div id="questionCard" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md space-y-6">
+                <!-- نص السؤال -->
+                <div class="space-y-2">
+                    <span class="inline-block text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">اختر الإجابة الصحيحة</span>
+                    <h4 id="questionText" class="text-lg sm:text-2xl font-extrabold text-slate-900 leading-relaxed pt-1">
+                        <!-- نص السؤال هنا -->
+                    </h4>
+                </div>
+
+                <!-- قائمة الاختيارات -->
+                <div id="optionsContainer" class="space-y-3.5">
+                    <!-- أزرار الاختيارات هنا -->
+                </div>
+
+                <!-- صندوق التغذية الراجعة والشرح (يظهر بعد الإجابة) -->
+                <div id="feedbackBox" class="hidden rounded-2xl p-5 border-2 transition-all duration-300">
+                    <div class="flex items-start gap-3.5">
+                        <div id="feedbackIcon" class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                            <!-- أيقونة صح أو خطأ -->
+                        </div>
+                        <div class="space-y-1.5 flex-grow">
+                            <h5 id="feedbackTitle" class="font-black text-base sm:text-lg">
+                                <!-- عنوان النتيجة -->
+                            </h5>
+                            <p id="feedbackExplanation" class="text-sm sm:text-base leading-relaxed font-medium">
+                                <!-- شرح الإجابة -->
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- زر السؤال التالي -->
+                <div id="nextBtnContainer" class="hidden pt-2 flex justify-end">
+                    <button id="nextQuestionBtn" onclick="nextQuestion()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-8 py-3.5 rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-95">
+                        <span id="nextBtnText">السؤال التالي</span>
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. شاشة الملخص والنتيجة النهائية (Summary View) -->
+        <section id="summaryView" class="hidden max-w-2xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xl text-center space-y-6">
+                <!-- أيقونة التتويج -->
+                <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center shadow-lg shadow-amber-200">
+                    <i data-lucide="award" class="w-12 h-12 text-amber-800"></i>
+                </div>
+
+                <div class="space-y-2">
+                    <h3 class="text-2xl sm:text-3xl font-black text-slate-900">أحسنت يا بطل!</h3>
+                    <p id="summaryLessonName" class="text-slate-500 font-semibold text-sm sm:text-base">لقد أتممت التدريب على الدرس بنجاح</p>
+                </div>
+
+                <!-- إحصائيات النتيجة -->
+                <div class="grid grid-cols-3 gap-3 sm:gap-4 pt-2">
+                    <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
+                        <span class="block text-xs font-bold text-emerald-700 mb-1">إجابات صحيحة</span>
+                        <span id="summaryCorrectCount" class="text-2xl sm:text-3xl font-black text-emerald-600">0</span>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-200 p-4 rounded-2xl">
+                        <span class="block text-xs font-bold text-rose-700 mb-1">إجابات خاطئة</span>
+                        <span id="summaryWrongCount" class="text-2xl sm:text-3xl font-black text-rose-600">0</span>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl">
+                        <span class="block text-xs font-bold text-amber-800 mb-1">كوينز الدرس</span>
+                        <span class="text-2xl sm:text-3xl font-black text-amber-600">+<span id="summaryEarnedCoins">0</span></span>
+                    </div>
+                </div>
+
+                <!-- نسبة النجاح -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-bold text-slate-700">نسبة الإتقان</span>
+                        <span id="summaryAccuracy" class="text-lg font-black text-indigo-600">0%</span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                        <div id="summaryAccuracyBar" class="h-full bg-indigo-600 rounded-full transition-all duration-700" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- أزرار الإجراءات -->
+                <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                    <button onclick="restartLesson()" class="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-md transition-all">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                        إعادة التدريب على الدرس
+                    </button>
+                    <button onclick="backToLessons()" class="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold py-3.5 px-6 rounded-2xl transition-all">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
+                        دروس الفرع
+                    </button>
+                    <button onclick="backToBranches()" class="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold py-3.5 px-6 rounded-2xl transition-all">
+                        <i data-lucide="grid" class="w-5 h-5"></i>
+                        فروع المادة
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- تذييل الصفحة -->
+    <footer class="bg-white border-t border-slate-200 py-5 mt-12">
+        <div class="max-w-5xl mx-auto px-4 text-center text-xs sm:text-sm text-slate-500 font-medium">
+            منصة شاطر • تم التصميم خصيصاً لطلاب الصف الأول الثانوي بالتوفيق والنجاح الدائم 🌟
+        </div>
+    </footer>
+
+    <!-- قاعدة بيانات المنهج والأسئلة + منطق التطبيق -->
+    <script>
+        // ==========================================
+        // 1. قاعدة بيانات المنهج الدراسي (مادة -> فرع/وحدة -> درس -> أسئلة)
+        // ==========================================
+        const curriculumData = [
+            {
+                id: 'arabic',
+                title: 'اللغة العربية',
+                subtitle: 'النحو • البلاغة • الأدب • النصوص • القراءة',
+                icon: 'book-open',
+                colorFrom: 'from-emerald-500',
+                colorTo: 'to-teal-600',
+                badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                branches: [
+                    {
+                        id: 'ar_nahw',
+                        title: 'فرع النحو',
+                        description: 'الأفعال الناسخة الناقصة والتامة، أفعال المقاربة والرجاء والشروع، والمشتقات العاملة.',
+                        icon: 'spell-check',
+                        color: 'emerald',
+                        lessons: [
+                            {
+                                id: 'ar_nahw_kana',
+                                title: 'الدرس الأول: كان وأخواتها (الناقصة والتامة)',
+                                description: 'الفرق بين كان الناقصة والتامة، أنواع خبر كان، ومعاني أخوات كان.',
+                                questions: [
+                                    {
+                                        q: 'قال تعالى: "وَكَانَ اللَّهُ غَفُورًا رَّحِيمًا". ما إعراب لفظ الجلالة (الله) وكلمة (غفوراً)؟',
+                                        options: [
+                                            'فاعل مرفوع، ومفعول به منصوب',
+                                            'اسم كان مرفوع، وخبر كان منصوب',
+                                            'مبتدأ مرفوع، وخبر مرفوع',
+                                            'اسم كان منصوب، وخبر كان مرفوع'
+                                        ],
+                                        correct: 1,
+                                        explanation: '(كان) فعل ماضٍ ناسخ ناقص يرفع المبتدأ ويُسمى اسمها (الله)، وينصب الخبر ويُسمى خبرها (غفوراً).'
+                                    },
+                                    {
+                                        q: 'في جملة: "اجتهد الطالب فكان النجاح". ما إعراب كلمة (النجاح)؟',
+                                        options: [
+                                            'اسم كان مرفوع وعلامة رفعه الضمة',
+                                            'خبر كان منصوب وعلامة نصبه الفتحة',
+                                            'فاعل مرفوع وعلامة رفعه الضمة لأن (كان) تامة',
+                                            'مفعول به منصوب وعلامة نصبه الفتحة'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'جاءت (كان) هنا تامة بمعنى (حَدَثَ أو تَحَقَّقَ) واكتفت بمرفوعها ولم تحتج إلى خبر، فتُعرب كلمة (النجاح) فاعلاً مرفوعاً.'
+                                    },
+                                    {
+                                        q: 'قال تعالى: "أَلَا إِلَى اللَّهِ تَصِيرُ الْأُمُورُ". ما إعراب كلمة (الأمور)؟',
+                                        options: [
+                                            'اسم تصير مرفوع وعلامة رفعه الضمة',
+                                            'فاعل مرفوع وعلامة رفعه الضمة',
+                                            'مفعول به منصوب وعلامة نصبه الفتحة',
+                                            'نائب فاعل مرفوع وعلامة رفعه الضمة'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الفعل (تصير) هنا تام بمعنى (ترجع وتنتهي)، واكتفى بمرفوعه (الأمور)، فتُعرب (الأمور) فاعلاً مرفوعاً.'
+                                    },
+                                    {
+                                        q: 'من أخوات (كان) التي لا تأتي إلا ناقصة دائماً ولا تُستعمل تامة:',
+                                        options: [
+                                            'صار وأصبح',
+                                            'ما زال وما فتئ وليس',
+                                            'ظل وبات',
+                                            'أضحى وأمسى'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الأفعال (ما زال، ما فتئ، ليس) أفعال جامدة أو ملازمة للنقصان ولا تأتي تامة أبداً.'
+                                    },
+                                    {
+                                        q: 'ما نوع خبر (أصبح) في قولنا: "أصبح العلمُ فوائدُه كثيرةٌ"؟',
+                                        options: [
+                                            'خبر مفرد',
+                                            'خبر جملة فعلية',
+                                            'خبر جملة اسمية',
+                                            'خبر شبه جملة'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'جملة (فوائده كثيرة) مكونة من مبتدأ ثانٍ (فوائده) وضمير رابط وخبر للمبتدأ الثاني (كثيرة)، والجملة الاسمية في محل نصب خبر أصبح.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ar_nahw_kada',
+                                title: 'الدرس الثاني: كاد وأخواتها (المقاربة والرجاء والشروع)',
+                                description: 'شروط عمل كاد وأخواتها، وحكم اقتران خبرها بـ (أنْ) المصدرية.',
+                                questions: [
+                                    {
+                                        q: 'ما حكم اقتران خبر (عسى وأوشك) بـ (أنْ)؟',
+                                        options: [
+                                            'يقل اقترانه بأن',
+                                            'يكثر اقترانه بأن',
+                                            'يجب اقترانه بأن',
+                                            'يمتنع اقترانه بأن'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'أفعال المقاربة والرجاء والشروع: يقل مع (كاد وكرب)، يكثر مع (عسى وأوشك)، يجب مع (حرى واخلولق)، ويمتنع مع أفعال الشروع.'
+                                    },
+                                    {
+                                        q: 'أيُّ الجمل التالية صحيحة نحوياً عند استخدام فعل من أفعال الشروع؟',
+                                        options: [
+                                            'بدأ الطلابُ أن يذاكروا دروسهم',
+                                            'بدأ الطلابُ يذاكرون دروسهم',
+                                            'بدأ الطلابُ مذاكرين دروسهم',
+                                            'بدأ الطلابُ يذاكروا دروسهم'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'أفعال الشروع (مثل بدأ، أخذ، شرع) يجب أن يكون خبرها جملة فعلية فعلها مضارع، ويمتنع اقتران خبرها بـ (أن)، لذا (يذاكرون) مرفوع بثبوت النون.'
+                                    },
+                                    {
+                                        q: 'قال الشاعر: "أخذتِ السماءُ تمطرُ بغزارة". ما نوع الفعل (أخذت) في هذه الجملة؟',
+                                        options: [
+                                            'فعل تام يرفع فاعلاً وينصب مفعولاً',
+                                            'فعل ناسخ ناقص من أفعال الشروع وخبره جملة (تمطر)',
+                                            'فعل ناسخ من أخوات كان',
+                                            'فعل من أفعال الرجاء'
+                                        ],
+                                        correct: 1,
+                                        explanation: '(أخذ) هنا بمعنى (بدأ) وخبره جملة فعلية فعلها مضارع (تمطر)، فهو فعل ناقص ناسخ من أفعال الشروع، و(السماء) اسم أخذ مرفوع.'
+                                    },
+                                    {
+                                        q: 'أدخل (حرى) على الجملة: "المتفوقون يكرمون". تصبح الجملة:',
+                                        options: [
+                                            'حرى المتفوقون يكرمون',
+                                            'حرى المتفوقين أن يُكرَموا',
+                                            'حرى المتفوقون أن يُكرَموا',
+                                            'حرى المتفوقون مكرمين'
+                                        ],
+                                        correct: 2,
+                                        explanation: '(حرى) ترفع اسمها (المتفوقون) بالواو، ويجب اقتران خبرها بـ (أن) الناصبة للمضارع، فيُحذف النون من (يُكرَموا) لأنه من الأفعال الخمسة المنصوبة.'
+                                    },
+                                    {
+                                        q: 'في جملة: "أخذ الطالبُ الكتابَ". ما إعراب كلمة (الكتاب)؟',
+                                        options: [
+                                            'خبر أخذ منصوب',
+                                            'مفعول به منصوب وعلامة نصبه الفتحة',
+                                            'اسم أخذ مرفوع',
+                                            'حال منصوب'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الفعل (أخذ) هنا لم يأتِ خبره جملة فعلية فعلها مضارع، بل هو فعل تام بمعنى التناول، فـ (الطالب) فاعل و(الكتاب) مفعول به.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ar_nahw_ism_fael',
+                                title: 'الدرس الثالث: إعمال اسم الفاعل',
+                                description: 'صياغة اسم الفاعل من الثلاثي وغير الثلاثي، وشروط إعماله عمل فعله المبني للمعلوم.',
+                                questions: [
+                                    {
+                                        q: 'كيف يُصاغ اسم الفاعل من الفعل غير الثلاثي (استخرج)؟',
+                                        options: [
+                                            'خارج',
+                                            'مُستخرِج (بضم الميم وكسر ما قبل الآخر)',
+                                            'مُستخرَج (بضم الميم وفتح ما قبل الآخر)',
+                                            'استخراج'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'يُصاغ اسم الفاعل من غير الثلاثي على وزن مضارعه مع إبدال حرف المضارعة ميماً مضمومة وكسر ما قبل الآخر: استخرج ← يستخرج ← مُستخرِج.'
+                                    },
+                                    {
+                                        q: 'في جملة: "المؤمنُ شاكرٌ ربَّه". ما إعراب كلمة (ربَّه)؟',
+                                        options: [
+                                            'مضاف إليه مجرور',
+                                            'مفعول به لاسم الفاعل العامل منصوب وعلامة نصبه الفتحة',
+                                            'خبر ثانٍ مرفوع',
+                                            'فاعل مرفوع'
+                                        ],
+                                        correct: 1,
+                                        explanation: '(شاكر) اسم فاعل نكرة منون اعتمد على مبتدأ ودل على الحال أو الاستقبال، فيعمل عمل فعله (يشكر هو ربَّه)، فتُعرب (ربه) مفعولاً به.'
+                                    },
+                                    {
+                                        q: 'قال تعالى: "وَالْكَاظِمِينَ الْغَيْظَ وَالْعَافِينَ عَنِ النَّاسِ". لماذا عَمِلَ اسم الفاعل (الكاظمين) هنا؟',
+                                        options: [
+                                            'لأنه اعتمد على نفي',
+                                            'لأنه مقترن بـ (أل) فيعمل بلا شروط',
+                                            'لأنه اعتمد على موصوف',
+                                            'لأنه اعتمد على استفهام'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'اسم الفاعل المقترن بـ (أل) يعمل عمل فعله مطلقاً دون الحاجة إلى شروط، و(الغيظ) مفعول به منصوب.'
+                                    },
+                                    {
+                                        q: 'ما إعراب كلمة (أخوك) في جملة: "أمسافرٌ أخوك اليوم؟"',
+                                        options: [
+                                            'مبتدأ مؤخر مرفوع',
+                                            'فاعل لاسم الفاعل (مسافر) سد مسد الخبر مرفوع بالواو',
+                                            'مفعول به منصوب',
+                                            'خبر مرفوع بالواو'
+                                        ],
+                                        correct: 1,
+                                        explanation: '(مسافر) مبتدأ مرفوع وهو اسم فاعل اعتمد على استفهام، و(أخوك) فاعل مرفوع بالواو سد مسد الخبر.'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'ar_balagha',
+                        title: 'فرع البلاغة',
+                        description: 'التعبير الحقيقي والمجازي، التشبيه المفرد والمركب، والاستعارة المكنية والتصريحية.',
+                        icon: 'sparkles',
+                        color: 'teal',
+                        lessons: [
+                            {
+                                id: 'ar_balagha_haqiqa',
+                                title: 'الدرس الأول: التعبير الحقيقي والتعبير المجازي',
+                                description: 'التمييز بين استخدام الألفاظ في معانيها الأصلية واستخدامها في معانٍ خيالية.',
+                                questions: [
+                                    {
+                                        q: 'أيٌّ من التعبيرات التالية يُعد تعبيراً حقيقياً؟',
+                                        options: [
+                                            'رأيتُ أسداً يخطبُ فوق المنبر',
+                                            'زأرَ الأسدُ في الغابة بصوتٍ مرتفع',
+                                            'ابتسمتِ الشمسُ في الصباح الباكر',
+                                            'طارتِ الأخبارُ السعيدةُ في المدينة'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'زئير الأسد في الغابة حقيقة واقعية استُخدمت فيها الألفاظ في معانيها الأصلية، أما باقي الخيارات ففيها خيال (مجاز).'
+                                    },
+                                    {
+                                        q: 'قولنا: "حطّم جيشُنا غرورَ الأعداء". يُعد هذا التعبير:',
+                                        options: [
+                                            'تعبيراً حقيقياً',
+                                            'تعبيراً مجازياً (خيالياً)',
+                                            'تعبيراً علمياً بحتاً',
+                                            'أسلوباً إنشائياً'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الغرور شيء معنوي لا يُحطّم مادياً، فقد صوّر الغرور بشيء مادي يُحطّم، لذا فهو تعبير مجازي.'
+                                    },
+                                    {
+                                        q: 'ما الهدف الأساسي من استخدام التعبير المجازي في الأدب؟',
+                                        options: [
+                                            'إطالة الكلام دون فائدة',
+                                            'إيضاح المعنى وإبراز العاطفة والتأثير في النفس',
+                                            'إخفاء المعنى عن القارئ تماماً',
+                                            'تقديم حقائق رياضية مجربة'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'التعبير المجازي يمنح الأسلوب جمالاً وقوة تأثير، ويجسد المعاني ويقربها إلى ذهن القارئ.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ar_balagha_tashbih',
+                                title: 'الدرس الثاني: التشبيه وأنواعه (المفرد والمركب)',
+                                description: 'أركان التشبيه الأربعة، التشبيه المفصل والمجمل والبليغ والتمثيلي والضمني.',
+                                questions: [
+                                    {
+                                        q: 'قال الشاعر: "أنتَ كالليثِ في الشجاعةِ والإقدامِ". ما نوع التشبيه في هذا البيت؟',
+                                        options: [
+                                            'تشبيه بليغ',
+                                            'تشبيه مجمل',
+                                            'تشبيه مفصل',
+                                            'تشبيه تمثيلي'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'التشبيه مفصل لأن أركانه الأربعة ذُكرت كاملة: المشبه (أنت)، الأداة (الكاف)، المشبه به (الليث)، ووجه الشبه (في الشجاعة والإقدام).'
+                                    },
+                                    {
+                                        q: 'في قولنا: "العلمُ نورٌ يهدي الحائرين". ما نوع التشبيه في جملة (العلم نور)؟',
+                                        options: [
+                                            'تشبيه بليغ',
+                                            'تشبيه مفصل',
+                                            'تشبيه ضمني',
+                                            'تشبيه مجمل'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'التشبيه البليغ هو ما حُذفت منه أداة التشبيه ووجه الشبه، واقتصر على المشبه (العلم) والمشبه به (نور) فقط.'
+                                    },
+                                    {
+                                        q: 'قال الشاعر: "تهونُ علينا في المعالي نفوسُنا * ومن يخطبِ الحسناءَ لم يغلِها المهرُ". ما نوع التشبيه؟',
+                                        options: [
+                                            'تشبيه تمثيلي',
+                                            'تشبيه ضمني',
+                                            'تشبيه مفصل',
+                                            'تشبيه مجمل'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'تشبيه ضمني؛ لأنه يُفهم من مضمون الكلام دون ذكر أداة تشبيه، حيث شبّه التضحية بالنفس لبلوغ المجد بدفع المهر الغالي للزواج من الفتاة الحسناء.'
+                                    },
+                                    {
+                                        q: 'قال تعالى: "مَثَلُ الَّذِينَ يُنفِقُونَ أَمْوَالَهُمْ فِي سَبِيلِ اللَّهِ كَمَثَلِ حَبَّةٍ أَنبَتَتْ سَبْعَ سَنَابِلَ". نوع التشبيه:',
+                                        options: [
+                                            'تشبيه مجمل',
+                                            'تشبيه تمثيلي',
+                                            'تشبيه ضمني',
+                                            'تشبيه بليغ'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'تشبيه تمثيلي؛ لأنه شبّه صورة مركبة (حالة المنفق في سبيل الله ومضاعفة أجره) بصورة مركبة أخرى (حالة الحبة التي تنبت سبع سنابل).'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ar_balagha_istiara',
+                                title: 'الدرس الثالث: الاستعارة المكنية والتصريحية',
+                                description: 'الفرق بين الاستعارة المكنية والتصريحية وأسرار جمال الصورة البيانية.',
+                                questions: [
+                                    {
+                                        q: 'قال تعالى: "وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا". ما نوع الصورة البيانية في كلمة (حبل)؟',
+                                        options: [
+                                            'تشبيه بليغ',
+                                            'استعارة مكنية',
+                                            'استعارة تصريحية',
+                                            'تشبيه تمثيلي'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'استعارة تصريحية؛ حيث شبّه الله تعالى دينه وكتابه بالحبل المتين، فحذف المشبه (الدين) وصرّح بالمشبه به (حبل).'
+                                    },
+                                    {
+                                        q: 'قال الشاعر: "وإذا المنيةُ أنشبتْ أظفارَها * ألفيتَ كلَّ تميمةٍ لا تنفعُ". نوع الصورة في (المنية أنشبت أظفارها):',
+                                        options: [
+                                            'استعارة مكنية وسر جمالها التشخيص',
+                                            'استعارة تصريحية وسر جمالها التوضيح',
+                                            'تشبيه بليغ وسر جماله التجسيم',
+                                            'تشبيه مجمل وسر جماله التشخيص'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'استعارة مكنية؛ حيث شبّه المنية (الموت) بوحش مفترس له أظفار، وحذف المشبه به (الوحش) وأتى بشيء من لوازمه (أظفارها).'
+                                    },
+                                    {
+                                        q: 'ما سر جمال الاستعارة في قولنا: "ابتسمتِ الحياةُ للمتفائلين"؟',
+                                        options: [
+                                            'التجسيم',
+                                            'التوضيح',
+                                            'التشخيص',
+                                            'المبالغة'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'سر الجمال هنا هو (التشخيص) لأننا شبّهنا غير العاقل (الحياة) بإنسان عاقل يبتسم.'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'ar_adab',
+                        title: 'فرع الأدب',
+                        description: 'تاريخ الأدب العربي عبر العصور: العصر الجاهلي (شعراً ونثراً) وعصر صدر الإسلام.',
+                        icon: 'feather',
+                        color: 'cyan',
+                        lessons: [
+                            {
+                                id: 'ar_adab_jahili_shir',
+                                title: 'الدرس الأول: الشعر في العصر الجاهلي',
+                                description: 'البيئة الجاهلية، منهج القصيدة الجاهلية، المعلقات، وسمات الشعر الجاهلي.',
+                                questions: [
+                                    {
+                                        q: 'لماذا سُمِّي العصر الجاهلي بهذا الاسم؟',
+                                        options: [
+                                            'لانتشار الأمية وعدم معرفة القراءة والكتابة',
+                                            'نسبةً إلى الجهل الذي هو الطيش والحمق وفعل القبيح عن علم',
+                                            'لعدم وجود حضارات أو أسواق أدبية في شبه الجزيرة العربية',
+                                            'لأن العرب لم يعرفوا الشعر أو النثر في تلك الفترة'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'سُمي العصر الجاهلي بذلك نسبةً إلى (الجهالة) وهي فعل الشيء القبيح بعلم وإرادة، وليس الجهل ضد العلم.'
+                                    },
+                                    {
+                                        q: 'بمَ كانت تبدأ القصيدة الجاهلية غالباً وفق المنهج التقليدي للقصيدة؟',
+                                        options: [
+                                            'بالحكمة والموعظة الحسنة',
+                                            'بوصف الناقة أو الفرس',
+                                            'بالغزل والوقوف على الأطلال',
+                                            'بالفخر بالقبيلة والهجاء'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'كانت القصيدة الجاهلية تبدأ غالباً بالغزل والوقوف على الأطلال، ثم الوصف، ثم الغرض الأساسي، وتُختم بالحكمة.'
+                                    },
+                                    {
+                                        q: 'ما المقصود بـ "المعلقات" في الأدب الجاهلي؟',
+                                        options: [
+                                            'قصائد قصيرة قيلت في رثاء الملوك فقط',
+                                            'قصائد طوال من أجود الشعر الجاهلي استحسنها العرب وخلدوها',
+                                            'خطب سياسية كانت تُلقى في سوق عكاظ',
+                                            'حكم وأمثال نثرية نُقشت على جدران الكعبة'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'المعلقات هي قصائد طوال من أجود ما قيل في الشعر الجاهلي، عُلقت بالأذهان لجودتها وروعتها.'
+                                    },
+                                    {
+                                        q: 'لُقِّب الشاعر الجاهلي امرؤ القيس بـ :',
+                                        options: [
+                                            'شاعر الحوليات',
+                                            'الغلام القتيل',
+                                            'الملك الضليل وأمير شعراء العصر الجاهلي',
+                                            'صاحب المعلقات السبع'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'امرؤ القيس هو أمير شعراء العصر الجاهلي، ولُقّب بالملك الضليل.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ar_adab_jahili_nathr',
+                                title: 'الدرس الثاني: النثر في العصر الجاهلي',
+                                description: 'فنون النثر الجاهلي: الخطابة، الوصايا، الحكم، والأمثال وخصائص كل فن.',
+                                questions: [
+                                    {
+                                        q: 'قول موجز يرتبط بقصة أو حادثة قيل فيها، وله مورد ومضرب. يُعرّف هذا الفن النثري بـ:',
+                                        options: [
+                                            'الخطبة',
+                                            'الوصية',
+                                            'المثل',
+                                            'الحكمة'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'المثل هو قول موجز سائر على الألسنة له مورد (المناسبة الأصلية التي قيل فيها) ومضرب (الحالة المشابهة التي يُقال فيها).'
+                                    },
+                                    {
+                                        q: 'أيٌّ مما يلي يُعد من الخصائص الفنية للنثر في العصر الجاهلي؟',
+                                        options: [
+                                            'طول الجمل وكثرة التعقيد اللفظي',
+                                            'الإيجاز وجمال الصياغة ودقة الألفاظ وشيوع المحسنات',
+                                            'الاعتماد على العامية واللهجات المحلية',
+                                            'خلوه تماماً من الصور البيانية'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'يتميز النثر الجاهلي بالإيجاز، وجمال الصياغة، ودقة الألفاظ، ووضوح المعاني، وسلامة الفكر، وشيوع المحسنات البديعية.'
+                                    },
+                                    {
+                                        q: 'ما الفرق الجوهري بين الخطبة والوصية في العصر الجاهلي؟',
+                                        options: [
+                                            'الخطبة تُقال في مواجهة الجمهور، أما الوصية فتُوجه لفرد أو جماعة قولاً أو كتابة',
+                                            'الخطبة تُكتب شعراً، أما الوصية فتُكتب نثراً',
+                                            'الخطبة خاصة بالنساء، والوصية خاصة بالملوك',
+                                            'لا يوجد أي فرق بينهما'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'الخطبة فن مخاطبة الجماهير وجهاً لوجه بهدف الإقناع والإمتاع، بينما الوصية خلاصة تجارب يُوجهها إنسان لمن يحب أو لأبنائه.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ar_adab_islam',
+                                title: 'الدرس الثالث: الأدب في عصر صدر الإسلام',
+                                description: 'أثر الإسلام في حياة العرب وفي الشعر والنثر، وظهور فنون نثرية جديدة.',
+                                questions: [
+                                    {
+                                        q: 'من الأغراض الشعرية الجديدة التي ظهرت في عصر صدر الإسلام:',
+                                        options: [
+                                            'الغزل الصريح والهجاء القبلي',
+                                            'شعر الفتوح والمغازي',
+                                            'وصف الخمر ومجالس اللهو',
+                                            'الوقوف على الأطلال'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'ظهرت أغراض جديدة فرضتها ظروف الدعوة الإسلامية والجهاد، وعلى رأسها شعر الفتوح والمغازي.'
+                                    },
+                                    {
+                                        q: 'ما الفن النثري الذي استُحدث وتطور بشكل كبير في عصر صدر الإسلام لحاجة الدولة الإسلامية إليه؟',
+                                        options: [
+                                            'سجع الكهان',
+                                            'فن الرسائل (المكاتبات)',
+                                            'المعلقات الطوال',
+                                            'المقامات الأدبية'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'استُحدث فن الرسائل استجابةً لحاجات الدولة الإسلامية في مراسلة الملوك والأمراء وقادة الجيوش لدعوتهم إلى الإسلام أو لتنظيم شؤون الحكم.'
+                                    },
+                                    {
+                                        q: 'كيف أثّر القرآن الكريم والحديث الشريف في لغة الأدب في صدر الإسلام؟',
+                                        options: [
+                                            'أدى إلى هجر اللغة العربية الفصحى',
+                                            'هذّب ألفاظ اللغة وأبعدها عن الغريب والحوشي وأكسبها معاني جديدة',
+                                            'جعل الشعراء يتوقفون عن قول الشعر نهائياً',
+                                            'أدخل كلمات أعجمية كثيرة في الشعر'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'أثّر القرآن الكريم والحديث الشريف في اللغة والأدب؛ فهذّب الألفاظ، وارتقى بالأساليب، وأبعدها عن الألفاظ الغريبة الصعبة.'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'ar_nusoos',
+                        title: 'فرع النصوص المتحررة',
+                        description: 'التدريب على تحليل النصوص الشعرية والنثرية واستنتاج المعاني والعلاقات البلاغية.',
+                        icon: 'scroll-text',
+                        color: 'emerald',
+                        lessons: [
+                            {
+                                id: 'ar_nusoos_shabab',
+                                title: 'تطبيقات على نص: شباب تسامى للعلا وكهول (للسموأل)',
+                                description: 'تحليل معاني الفخر والحماسة عند السموأل واستنتاج العلاقات الضمنية.',
+                                questions: [
+                                    {
+                                        q: 'يقول السموأل: "إذا المرءُ لم يدنسْ من اللؤمِ عرضُه * فكلُّ رداءٍ يرتديهِ جميلُ". ما علاقة الشطر الثاني بالأول؟',
+                                        options: [
+                                            'تعليل لما قبله',
+                                            'نتيجة لما قبله',
+                                            'توضيح بعد إبهام',
+                                            'تفصيل بعد إجمال'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'البيت أسلوب شرط أداته (إذا)، وجواب الشرط (فكل رداء يرتديه جميل) علاقته بما قبله دائماً (نتيجة).'
+                                    },
+                                    {
+                                        q: 'في البيت السابق للسموأل، ما المقصود بقوله: "لم يدنس من اللؤم عرضه"؟',
+                                        options: [
+                                            'لم تتسخ ملابسه بالطين',
+                                            'لم يتلطخ شرفه بصفات الخسة والبخل والغدر',
+                                            'لم يشارك في الحروب والمعارك',
+                                            'لم يسافر بعيداً عن قبيلته'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'العِرض هو الشرف والسمعة، والمعنى: إذا صان الإنسان شرفه من الصفات الذميمة كاللؤم والغدر فإن أي ثوب يرتديه يبدو جميلاً.'
+                                    },
+                                    {
+                                        q: 'يقول السموأل: "وننكرُ إن شئنا على الناسِ قولَهم * ولا ينكرون القولَ حين نقولُ". علامَ يدل هذا البيت؟',
+                                        options: [
+                                            'على ضعف القبيلة وخوفها',
+                                            'على سيادة القبيلة ومكانتها الرفيعة وهيبتها بين العرب',
+                                            'على كثرة الجدل والخصام دون سبب',
+                                            'على رغبة الشاعر في اعتزال الناس'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'يدل البيت على قوة القبيلة وسيادتها ومكانتها العالية التي تجعل كلمتها نافذة لا يجرؤ أحد على الاعتراض عليها.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ar_nusoos_qiyam',
+                                title: 'تطبيقات على نص: قيم الحياة الزوجية (وصية أمامة بنت الحارث)',
+                                description: 'تحليل النثر الجاهلي، الوصايا، والمحسنات البديعية في وصية أمامة لابنتها.',
+                                questions: [
+                                    {
+                                        q: 'تقول أمامة بنت الحارث لابنتها: "أي بنية، إن الوصية لو تُركت لفضل أدب تُركت لذلك منكِ". لماذا بدأت الأم وصيتها بهذا الأسلوب؟',
+                                        options: [
+                                            'لتوبّخ ابنتها على تقصيرها',
+                                            'لتهيئة نفس ابنتها وإقناعها بأهمية الوصية وتقدير مكانتها',
+                                            'لتُخبرها أنها لا تحتاج إلى نصيحة',
+                                            'لتعتذر عن عدم حضور حفل زفافها'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'هذه مقدمة ذكية من الأم تمدح فيها أدب ابنتها لتهيئ نفسيتها وتجذب انتباهها لتتقبل النصائح بقلب مفتوح.'
+                                    },
+                                    {
+                                        q: 'في قولها: "فكوني له أمةً يكن لكِ عبداً". ما العلاقة البلاغية بين (أمة) و(عبداً)؟',
+                                        options: [
+                                            'ترادف يؤكد المعنى',
+                                            'طباق يبرز المعنى ويوضحه بالتضاد',
+                                            'جناس تام يعطي جرساً موسيقياً',
+                                            'تشبيه بليغ'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'بين (أمة) أي خادمة، و(عبداً) أي مملوكاً طباق يوضح المعنى، والمعنى: تذللي له بالمحبة والطاعة يقدّرك ويحترمك.'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'ar_qiraa',
+                        title: 'فرع القراءة المتحررة',
+                        description: 'تنمية مهارات الفهم القرائي، استنتاج الفكرة الرئيسية، وتحديد معاني الكلمات من السياق.',
+                        icon: 'file-text',
+                        color: 'teal',
+                        lessons: [
+                            {
+                                id: 'ar_qiraa_skills',
+                                title: 'الدرس الأول: مهارات الفهم والاستنتاج في القراءة المتحررة',
+                                description: 'تحديد العلاقات بين الجمل، الفكرة العامة، والمغزى الضمني للمقالات العلمية والأدبية.',
+                                questions: [
+                                    {
+                                        q: 'اقرأ الفقرة: "تُعد القراءة غذاءً للعقل؛ إذ تفتح أمام الإنسان آفاقاً واسعة من المعرفة، وتنمي قدرته على التفكير النقدي". ما علاقة جملة (إذ تفتح أمام الإنسان...) بما قبلها؟',
+                                        options: [
+                                            'نتيجة',
+                                            'تعليل',
+                                            'استدراك',
+                                            'تفصيل بعد إجمال'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الأداة (إذ) هنا تعليلية؛ لأن الجملة الثانية تبين السبب في كون القراءة غذاءً للعقل.'
+                                    },
+                                    {
+                                        q: 'في نفس الفقرة: "تُعد القراءة غذاءً للعقل؛ إذ تفتح أمام الإنسان آفاقاً واسعة من المعرفة". ما مرادف كلمة (آفاقاً) في هذا السياق؟',
+                                        options: [
+                                            'قيوداً وحدوداً',
+                                            'مجالات ومدارك واسعة',
+                                            'عقبات ومشكلات',
+                                            'طرقاً مزدحمة'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'كلمة (آفاق) جمع أفق، والمراد بها في سياق المعرفة: مجالات ومدارك واسعة ومتنوعة.'
+                                    },
+                                    {
+                                        q: 'ما الفكرة الرئيسية التي تدور حولها الفقرة السابقة؟',
+                                        options: [
+                                            'صعوبة الحصول على الكتب في العصر الحديث',
+                                            'أهمية القراءة في تنمية العقل وبناء التفكير النقدي',
+                                            'الفرق بين القراءة الورقية والإلكترونية',
+                                            'تاريخ الطباعة والمكتبات'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الفقرة تركز بوضوح على دور القراءة وأهميتها في تغذية العقل وتوسيع مدارك الإنسان.'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'english',
+                title: 'اللغة الإنجليزية',
+                subtitle: 'Units • Vocabulary • Grammar',
+                icon: 'languages',
+                colorFrom: 'from-blue-500',
+                colorTo: 'to-indigo-600',
+                badgeBg: 'bg-blue-50 text-blue-700 border-blue-200',
+                branches: [
+                    {
+                        id: 'en_branch_u1',
+                        title: 'Unit 1: Getting Away',
+                        description: 'Ecotourism, endangered species, conservation, and Unit 1 language notes.',
+                        icon: 'palmtree',
+                        color: 'blue',
+                        lessons: [
+                            {
+                                id: 'en_u1_vocab',
+                                title: 'Lesson 1: Unit 1 Key Vocabulary',
+                                description: 'مفردات السياحة البيئية (Ecotourism)، الحفاظ على البيئة، والتعبيرات الهامة.',
+                                questions: [
+                                    {
+                                        q: 'Which word means "providing holidays to places which are often endangered and isolated"?',
+                                        options: [
+                                            'Ecotourism',
+                                            'Pollution',
+                                            'Industry',
+                                            'Overpopulation'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'كلمة (Ecotourism) تعني السياحة البيئية، وهي السياحة التي تهدف لزيارة الأماكن الطبيعية مع الحفاظ عليها وعدم الإضرار بالبيئة.'
+                                    },
+                                    {
+                                        q: 'The Komodo dragon is an .................... species; there are very few of them left in the wild.',
+                                        options: [
+                                            'endangered',
+                                            'dangerous',
+                                            'available',
+                                            'crowded'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'نستخدم صفة (endangered) بمعنى "معرّض للخطر أو الانقراض" لوصف الحيوانات النادرة، أما (dangerous) فتعني خطير.'
+                                    },
+                                    {
+                                        q: 'We must .................... our natural environment for future generations.',
+                                        options: [
+                                            'destroy',
+                                            'protect',
+                                            'pollute',
+                                            'damage'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الفعل (protect) يعني يحمي، وهو الأنسب لسياق الحفاظ على البيئة الطبيعية للأجيال القادمة.'
+                                    },
+                                    {
+                                        q: 'The hotel is located in a very .................... area, far away from any cities or towns.',
+                                        options: [
+                                            'noisy',
+                                            'remote',
+                                            'crowded',
+                                            'modern'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'كلمة (remote) تعني ناءٍ أو بعيد، وتستخدم لوصف الأماكن المعزولة عن المدن.'
+                                    },
+                                    {
+                                        q: 'Tourists should not .................... the coral reefs when they go diving in the Red Sea.',
+                                        options: [
+                                            'damage',
+                                            'develop',
+                                            'support',
+                                            'encourage'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'الفعل (damage) يعني يُتلف أو يُدمر، والمعنى: يجب ألا يُتلف السياح الشعاب المرجانية أثناء الغوص.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'en_u1_notes',
+                                title: 'Lesson 2: Language Notes & Prepositions',
+                                description: 'حروف الجر والمشتقات والفروق اللغوية في الوحدة الأولى (Swell, Lean, Trekked).',
+                                questions: [
+                                    {
+                                        q: 'After the bee stung his hand, it began to .................... up.',
+                                        options: [
+                                            'swell',
+                                            'dive',
+                                            'trek',
+                                            'exist'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'الفعل (swell up) يعني يتورم أو ينتفخ نتيجة لدغة أو إصابة.'
+                                    },
+                                    {
+                                        q: 'Don’t .................... out of the window of the moving train; it’s very dangerous.',
+                                        options: [
+                                            'lean',
+                                            'avoid',
+                                            'protect',
+                                            'include'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'الفعل (lean out of) يعني يميل أو يخرج بجسده من النافذة.'
+                                    },
+                                    {
+                                        q: 'The tourists .................... through the jungle for three days to reach the ancient temple.',
+                                        options: [
+                                            'trekked',
+                                            'tricked',
+                                            'tracked',
+                                            'treated'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'الفعل (trek) يعني يسير لمسافات طويلة وشاقة على الأقدام في مناطق وعرة أو غابات.'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'en_branch_u2',
+                        title: 'Unit 2: Supporting the Community',
+                        description: 'Charities, blood donation, role models, and community service vocabulary.',
+                        icon: 'heart-handshake',
+                        color: 'indigo',
+                        lessons: [
+                            {
+                                id: 'en_u2_vocab',
+                                title: 'Lesson 1: Unit 2 Key Vocabulary',
+                                description: 'مفردات العمل التطوعي، مساعدة المجتمع، ومحمد صلاح ومؤسسات التبرع.',
+                                questions: [
+                                    {
+                                        q: 'Mohamed Salah is admired .................... his speed, intelligence and ability to score goals.',
+                                        options: [
+                                            'for',
+                                            'at',
+                                            'of',
+                                            'from'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'تعبير (admired for) يأتي بمعنى "مُعجَب به بسبب..." ويتبعه السبب أو الصفة المميزة.'
+                                    },
+                                    {
+                                        q: 'Many rich people .................... money to charities to help poor families.',
+                                        options: [
+                                            'donate',
+                                            'steal',
+                                            'borrow',
+                                            'waste'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'الفعل (donate) يعني يتبرع، وغالباً ما يأتي مع كلمة money أو blood.'
+                                    },
+                                    {
+                                        q: 'Before you receive a blood ...................., doctors must check your blood pressure.',
+                                        options: [
+                                            'transplant',
+                                            'transfusion',
+                                            'transport',
+                                            'translation'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'مصطلح (blood transfusion) يعني عملية نقل الدم، بينما (transplant) تعني زراعة الأعضاء.'
+                                    },
+                                    {
+                                        q: 'She works as a .................... at the local hospital; she helps patients without taking any money.',
+                                        options: [
+                                            'manager',
+                                            'volunteer',
+                                            'guard',
+                                            'customer'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'كلمة (volunteer) تعني متطوع، أي شخص يقوم بعمل خيري دون مقابل مادي.'
+                                    },
+                                    {
+                                        q: 'The police are .................... the disappearance of the valuable painting.',
+                                        options: [
+                                            'investigating',
+                                            'celebrating',
+                                            'ignoring',
+                                            'inventing'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'الفعل (investigate) يعني يُحقق في جريمة أو لغز، وهو الأنسب مع عمل الشرطة.'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'en_branch_grammar',
+                        title: 'Grammar: Past & Present Tenses',
+                        description: 'Past Simple & Continuous, and Present Simple & Continuous rules.',
+                        icon: 'code-2',
+                        color: 'blue',
+                        lessons: [
+                            {
+                                id: 'en_gram_past',
+                                title: 'Lesson 1: Past Simple & Past Continuous',
+                                description: 'الفرق بين الماضي البسيط والماضي المستمر واستخدام روابط (While, When, During).',
+                                questions: [
+                                    {
+                                        q: 'While I .................... my homework, the lights suddenly went out.',
+                                        options: [
+                                            'did',
+                                            'was doing',
+                                            'am doing',
+                                            'have done'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'بعد الرابط (While) نستخدم زمن الماضي المستمر (was/were + V-ing) للتعبير عن حدث كان مستمراً عندما قطعه حدث آخر في الماضي البسيط (went out).'
+                                    },
+                                    {
+                                        q: 'When my father arrived home, my mother .................... dinner.',
+                                        options: [
+                                            'cooks',
+                                            'was cooking',
+                                            'has cooked',
+                                            'is cooking'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الحدث الطويل الذي كان مستمراً وقت وصول الأب هو طهي العشاء، لذلك نستخدم الماضي المستمر (was cooking).'
+                                    },
+                                    {
+                                        q: '.................... the match, the best player fell down and injured his leg.',
+                                        options: [
+                                            'While',
+                                            'During',
+                                            'When',
+                                            'As'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'نستخدم (During) لأن ما بعدها اسم (the match) وليس جملة كاملة تحتوي على فاعل وفعل.'
+                                    },
+                                    {
+                                        q: 'What .................... at 7 o’clock yesterday evening?',
+                                        options: [
+                                            'did you do',
+                                            'were you doing',
+                                            'are you doing',
+                                            'have you done'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'تحديد وقت معين في الماضي (at 7 o’clock yesterday evening) يدل على استمرارية الحدث في تلك اللحظة، فنستخدم الماضي المستمر.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'en_gram_present',
+                                title: 'Lesson 2: Present Simple & Present Continuous',
+                                description: 'استخدامات المضارع البسيط والمضارع المستمر والأفعال التقريرية (Stative Verbs).',
+                                questions: [
+                                    {
+                                        q: 'The sun .................... in the east and sets in the west.',
+                                        options: [
+                                            'is rising',
+                                            'rises',
+                                            'rose',
+                                            'has risen'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'نستخدم زمن المضارع البسيط (rises) للتعبير عن الحقائق العلمية الثابتة.'
+                                    },
+                                    {
+                                        q: 'Look! The boys .................... football in the school playground right now.',
+                                        options: [
+                                            'play',
+                                            'are playing',
+                                            'played',
+                                            'were playing'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'كلمة (Look!) و(right now) تدل على أن الحدث يقع الآن لحظة الكلام، فنستخدم المضارع المستمر (are playing).'
+                                    },
+                                    {
+                                        q: 'I .................... what you mean; your explanation is very clear.',
+                                        options: [
+                                            'am understanding',
+                                            'understand',
+                                            'was understanding',
+                                            'understands'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الفعل (understand) من أفعال الإدراك والحالة (Stative Verbs) التي لا تُستخدم في الأزمنة المستمرة، فنستخدم المضارع البسيط.'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'philosophy',
+                title: 'الفلسفة والمنطق',
+                subtitle: 'مبادئ التفكير الفلسفي • التفكير العلمي والمنطق',
+                icon: 'brain-circuit',
+                colorFrom: 'from-purple-500',
+                colorTo: 'to-fuchsia-600',
+                badgeBg: 'bg-purple-50 text-purple-700 border-purple-200',
+                branches: [
+                    {
+                        id: 'ph_branch_philosophy',
+                        title: 'أولاً: مبادئ التفكير الفلسفي',
+                        description: 'التفكير الإنساني، نشأة الفلسفة وتعريفها وأهميتها، وخصائص ومهارات التفكير الفلسفي.',
+                        icon: 'compass',
+                        color: 'purple',
+                        lessons: [
+                            {
+                                id: 'ph_lesson_thinking',
+                                title: 'الدرس الأول: التفكير الإنساني وخصائصه وعوامل الخطأ',
+                                description: 'مفهوم التفكير، الحالات التي تثير النشاط العقلي، خصائص التفكير، وعوامل الوقوع في الخطأ.',
+                                questions: [
+                                    {
+                                        q: 'عندما تتذكر جدول امتحاناتك وتبدأ في وضع خطة للمذاكرة وتنظيم وقتك، فإن ذلك يمثل إحدى الحالات التي تثير النشاط العقلي وهي:',
+                                        options: [
+                                            'تذكر الماضي',
+                                            'تنظيم التفكير',
+                                            'التخطيط للمستقبل',
+                                            'حل المشكلات'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'وضع خطة للمستقبل وتحديد الأهداف الدراسية أو المهنية يُعد من صور (التخطيط للمستقبل) الذي يثير نشاط العقل.'
+                                    },
+                                    {
+                                        q: 'يُعد التفكير الإنساني نشاطاً عقلياً غير مرئي، ولكننا نستدل عليه من خلال السلوك الظاهري للفرد. تشير العبارة إلى إحدى خصائص التفكير وهي أنه:',
+                                        options: [
+                                            'نشاط عملي للإنسان',
+                                            'إدراك للقوانين العامة للموجودات',
+                                            'يُعبر عنه في شكل لفظي رمزي',
+                                            'نشاط عقلي إنساني'
+                                        ],
+                                        correct: 3,
+                                        explanation: 'التفكير نشاط عقلي إنساني لا يعتمد على إحساس الفرد وإدراكه فقط، بل على معلوماته وخبراته السابقة، ولا نراه مباشرة بل نستدل عليه من السلوك.'
+                                    },
+                                    {
+                                        q: 'قيام أحد الطلاب بتبني أفكار متشددة دون تمحيص أو تفكير نقدي يوقعه في أحد عوامل الوقوع في خطأ التفكير وهو:',
+                                        options: [
+                                            'تغليب العاطفة على العقل',
+                                            'القابلية للاستهواء (سرعة التصديق)',
+                                            'التسرع في الحكم',
+                                            'نقص المعلومات'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'القابلية للاستهواء تعني سرعة تصديق ما يقوله الآخرون دون نقد أو فحص، وهي السبب الرئيسي لانتشار الشائعات والخرافات.'
+                                    },
+                                    {
+                                        q: 'إصدار حكم عام بأن "جميع سكان مدينة معينة بخلاء" لمجرد التعامل مع شخص واحد منهم، يُعد مثالاً على:',
+                                        options: [
+                                            'التعصب والتطرف',
+                                            'التسرع في الحكم',
+                                            'الهيمنة والسيطرة',
+                                            'صعوبة المشكلة'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'إصدار أحكام متعجلة غير مدروسة وتعميمها بناءً على موقف فردي يُعد من أخطاء التفكير الذاتية وهو (التسرع في الحكم).'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ph_lesson_origin',
+                                title: 'الدرس الثاني: الفلسفة نشأتها وتعريفها وأهميتها',
+                                description: 'نشأة الفلسفة في الشرق القديم واليونان، التعريف اللغوي والعام، وأهمية الفلسفة للفرد والمجتمع.',
+                                questions: [
+                                    {
+                                        q: 'كلمة "فلسفة" في الأصل هي كلمة يونانية تتكون من مقطعين (فيلو - صوفيا) وتعني:',
+                                        options: [
+                                            'حب العلم التجريبي',
+                                            'حب الحكمة',
+                                            'معرفة المستقبل',
+                                            'البحث في الظواهر الجزئية'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'كلمة (Philosophy) مشتقة من الكلمة اليونانية (Philosophia)، حيث (Philo) تعني حب أو إيثار، و(Sophia) تعني الحكمة، فتكون بمعنى حب الحكمة.'
+                                    },
+                                    {
+                                        q: 'أول من أطلق على نفسه لقب "فيلسوف" ورفض لقب "حكيم" لأن الحكمة لله وحده هو الفيلسوف اليوناني:',
+                                        options: [
+                                            'أرسطو',
+                                            'أفلاطون',
+                                            'فيثاغورث',
+                                            'طاليس'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'فيثاغورث هو أول من استخدم لفظ فيلسوف (محب الحكمة)، ورأى أن الحكمة صفة إلهية لا تليق بالإنسان، ويكفي الإنسان أن يكون محباً لها.'
+                                    },
+                                    {
+                                        q: 'اتسمت الفلسفة في بلاد الشرق القديم (مصر، بابل، الهند، الصين) بالطابع:',
+                                        options: [
+                                            'العقلي النظري الخالص',
+                                            'العملي والأخلاقي والديني',
+                                            'التجريبي المعملي',
+                                            'الرياضي المجرد'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'نشأ الفكر الفلسفي والأخلاقي في الشرق القديم مرتبطاً بالدين والحياة العملية، بينما نشأت الفلسفة النظرية الخالصة في بلاد اليونان.'
+                                    },
+                                    {
+                                        q: 'عندما يرفض الفرد الانسياق وراء العادات الاجتماعية البالية التي تعيق تقدم المجتمع ويعمل على نقدها وتجديدها، فإن الفلسفة تحقق للمجتمع أهمية تتمثل في:',
+                                        options: [
+                                            'المحافظة على المجتمع',
+                                            'غرس وتدعيم قيم ومبادئ جديدة',
+                                            'نقد قيم ثبت عدم صلاحيتها للحياة الاجتماعية',
+                                            'التنسيق بين جوانب ثقافة المجتمع'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'من وظائف الفلسفة للمجتمع نقد القيم والمبادئ التي ثبت عدم صلاحيتها وتؤدي إلى مشكلات اجتماعية، واستبدالها بقيم أكثر ملاءمة.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ph_lesson_skills',
+                                title: 'الدرس الثالث: خصائص التفكير الفلسفي ومهاراته',
+                                description: 'الدهشة وإثارة التساؤل، الاستقلال، التأمل، ومهارات الشك والنقد والحوار.',
+                                questions: [
+                                    {
+                                        q: 'هزة وجدانية أو انفعال عقلي يجعل الإنسان يقف مذهولاً أمام شيء غير مألوف ويدفعه للتساؤل والبحث عن التفسير. يشير ذلك إلى:',
+                                        options: [
+                                            'الاستقلال',
+                                            'الدهشة وإثارة التساؤل',
+                                            'الدقة المنطقية',
+                                            'التسامح الفكري'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الدهشة الفلسفية هي انفعال عقلي يهز وجدان الفيلسوف أمام الظواهر ويدفعه للتساؤل العقلي لا مجرد الذهول السلبي.'
+                                    },
+                                    {
+                                        q: 'التردد بين نقيضين أو بين رأيين كلاهما له وجاهته وحججه، دون ترجيح أحدهما على الآخر مؤقتاً. يُعرّف ذلك بـ:',
+                                        options: [
+                                            'الشك',
+                                            'اليقين المطلق',
+                                            'التعصب',
+                                            'الاستهواء'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'الشك هو التردد بين نقيضين بلا ترجيح، وينقسم إلى شك اعتيادي (نتيجة الجهل) وشك فلسفي (مذهبي ومنهجي).'
+                                    },
+                                    {
+                                        q: 'استخدم الفيلسوف الفرنسي (ديكارت) والغزالي الشك كوسيلة للوصول إلى الحقيقة اليقينية الثابتة. يُسمى هذا النوع من الشك بـ:',
+                                        options: [
+                                            'الشك المطلق (المذهبي)',
+                                            'الشك المنهجي',
+                                            'الشك الاعتيادي',
+                                            'الشك الهدّام'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الشك المنهجي يتخذه المفكر منهجاً وطريقاً للوصول إلى اليقين والحقيقة، كما فعل الغزالي وديكارت.'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'ph_branch_logic',
+                        title: 'ثانياً: مبادئ التفكير العلمي والمنطق',
+                        description: 'أساليب التفكير الإنساني، خصائص التفكير العلمي، خطواته، ومهاراته.',
+                        icon: 'flask-conical',
+                        color: 'fuchsia',
+                        lessons: [
+                            {
+                                id: 'ph_logic_styles',
+                                title: 'الدرس الأول: أساليب التفكير الإنساني (الخرافي، الديني، العلمي، الفلسفي، الإبداعي)',
+                                description: 'التمييز بين أساليب التفكير الخمسة وتطبيقاتها في الحياة اليومية.',
+                                questions: [
+                                    {
+                                        q: 'تفسير ظاهرة كسوف الشمس بأنها غضب من الآلهة أو نذير شؤم لوفاة شخص عظيم يُعد تفكيراً قائماً على الأسلوب:',
+                                        options: [
+                                            'العلمي',
+                                            'الديني',
+                                            'الخرافي',
+                                            'الفلسفي'
+                                        ],
+                                        correct: 2,
+                                        explanation: 'الأسلوب الخرافي يعتمد على أسباب ساذجة وغير صحيحة لتفسير الظواهر الطبيعية لجهله بالأسباب الحقيقية.'
+                                    },
+                                    {
+                                        q: 'نجاح الأطباء في ابتكار لقاح جديد للوقاية من أحد الفيروسات بعد إجراء التجارب المعملية يمثل الأسلوب:',
+                                        options: [
+                                            'الفلسفي',
+                                            'العلمي',
+                                            'الخرافي',
+                                            'الديني'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'الأسلوب العلمي يبحث عن العلل القريبة المباشرة للظواهر باستخدام الملاحظة والتجربة، ويساعد العلماء على حل المشكلات اليومية.'
+                                    },
+                                    {
+                                        q: 'يتميز الأسلوب الإبداعي في التفكير عن غيره من الأساليب بأنه يتصف بـ:',
+                                        options: [
+                                            'التأمل العقلي الشامل',
+                                            'الجدة والأصالة والقيمة',
+                                            'الاعتماد على الوصفات السحرية',
+                                            'الاقتصار على حفظ المعلومات القديمة'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'التفكير الإبداعي هو إنتاج أفكار تتسم بالجدة (جديدة) والأصالة (غير تقليدية) والقيمة (مفيدة للفرد والمجتمع).'
+                                    },
+                                    {
+                                        q: 'يبحث العالم في سبب ظاهرة البرق والرعد من خلال الشحنات الكهربائية في السحب، بينما يبحث الفيلسوف في سر وجود الكون ككل. يوضح ذلك أن الفلسفة تبحث في:',
+                                        options: [
+                                            'العلل القريبة المباشرة',
+                                            'العلل البعيدة والمبادئ الأولى',
+                                            'الحلول السريعة للأزمات',
+                                            'الظواهر الحسية فقط'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'العلم يبحث في العلل القريبة (المباشرة) للظاهرة الجزئية، أما الفلسفة فتتميز بالنزعة العقلية التأملية وتبحث في العلل البعيدة والوجود ككل.'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'ph_logic_scientific',
+                                title: 'الدرس الثاني: التفكير العلمي وخصائصه وخطواته',
+                                description: 'تعريف التفكير العلمي، خصائصه (الحرية، العمومية، الموضوعية، الكمية)، وخطواته.',
+                                questions: [
+                                    {
+                                        q: 'قيام الباحث العلمي بقياس درجة حرارة الغليان بالأرقام الدقيقة (100 درجة مئوية) بدلاً من القول بأن الماء ساخن جداً، يعبر عن إحدى خصائص التفكير العلمي وهي:',
+                                        options: [
+                                            'الحرية',
+                                            'الكمية (استخدام لغة الرياضيات)',
+                                            'الاستمرارية',
+                                            'الذاتية'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'التفكير العلمي كمي؛ حيث يستخدم العالم لغة الرياضيات والأرقام للتعبير عن التقديرات الكمية للظواهر بدقة.'
+                                    },
+                                    {
+                                        q: 'تجرد الباحث من أهوائه ومصالحه الشخصية عند إجراء التجربة العلمية وتقبله للنتائج حتى لو خالفت توقعاته يُسمى:',
+                                        options: [
+                                            'الموضوعية',
+                                            'التعصب',
+                                            'القابلية للاستهواء',
+                                            'العمومية'
+                                        ],
+                                        correct: 0,
+                                        explanation: 'الموضوعية تعني أن يبتعد الباحث عن معتقداته الذاتية ورغباته الشخصية ويحكم بناءً على الأدلة العلمية فقط.'
+                                    },
+                                    {
+                                        q: 'تبدأ خطوات التفكير العلمي لدى الباحث عندما يواجه موقفاً غامضاً أو تساؤلاً يحتاج إلى تفسير، وتُسمى هذه الخطوة الأولى بـ:',
+                                        options: [
+                                            'فرض الفروض',
+                                            'الشعور بالمشكلة',
+                                            'اختبار الفروض',
+                                            'اختيار أفضل البدائل'
+                                        ],
+                                        correct: 1,
+                                        explanation: 'أولى خطوات التفكير العلمي هي (الشعور بالمشكلة) أي الحيرة والتردد تجاه موقف أو ظاهرة تحتاج إلى حل وتفسير.'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // ==========================================
+        // 2. نظام الصوتيات الاحتفالية (Web Audio API)
+        // ==========================================
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (soundEnabled) {
+                icon.setAttribute('data-lucide', 'volume-2');
+            } else {
+                icon.setAttribute('data-lucide', 'volume-x');
+            }
+            lucide.createIcons();
+        }
+
+        // صوت احتفال ونجاح (نغمات صاعدة مبهجة + صوت كوينز)
+        function playCelebrationSound() {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                // نغمات الكورد الاحتفالي (C5, E5, G5, C6)
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    
+                    gain.gain.setValueAtTime(0.01, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.25, now + idx * 0.08 + 0.03);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.4);
+                });
+
+                // رنة كوين ذهبية إضافية
+                const coinOsc = audioCtx.createOscillator();
+                const coinGain = audioCtx.createGain();
+                coinOsc.type = 'sine';
+                coinOsc.frequency.setValueAtTime(987.77, now + 0.32); // B5
+                coinOsc.frequency.setValueAtTime(1318.51, now + 0.40); // E6
+                coinGain.gain.setValueAtTime(0.2, now + 0.32);
+                coinGain.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+                coinOsc.connect(coinGain);
+                coinGain.connect(audioCtx.destination);
+                coinOsc.start(now + 0.32);
+                coinOsc.stop(now + 0.8);
+            } catch (e) {
+                console.warn('Audio playback prevented:', e);
+            }
+        }
+
+        // صوت تنبيه لطيف للإجابة الخاطئة
+        function playWrongSound() {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.linearRampToValueAtTime(165, now + 0.25);
+
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.32);
+            } catch (e) {
+                console.warn('Audio playback prevented:', e);
+            }
+        }
+
+        // ==========================================
+        // 3. إدارة الحالة والتخزين المحلي (State & Storage)
+        // ==========================================
+        let totalCoins = parseInt(localStorage.getItem('tafawuq_1sec_coins') || '0', 10);
+        let lessonScores = JSON.parse(localStorage.getItem('tafawuq_1sec_lesson_scores') || '{}');
+        let currentSubject = null;
+        let currentBranch = null;
+        let currentLesson = null;
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let sessionCoins = 0;
+        let correctAnswersCount = 0;
+        let wrongAnswersCount = 0;
+        let isAnswered = false;
+
+        function updateCoinsUI(animate = false) {
+            const display = document.getElementById('totalCoinsDisplay');
+            const badge = document.getElementById('coinBadge');
+            display.textContent = totalCoins;
+            localStorage.setItem('tafawuq_1sec_coins', totalCoins.toString());
+
+            if (animate) {
+                badge.classList.remove('coin-pop');
+                void badge.offsetWidth; // إعادة تشغيل الأنيميشن
+                badge.classList.add('coin-pop');
+            }
+        }
+
+        function saveLessonScore(lessonId, earnedCoins, accuracy) {
+            const prev = lessonScores[lessonId];
+            if (!prev || earnedCoins > prev.coins || accuracy > prev.accuracy) {
+                lessonScores[lessonId] = {
+                    coins: Math.max(earnedCoins, prev ? prev.coins : 0),
+                    accuracy: Math.max(accuracy, prev ? prev.accuracy : 0)
+                };
+                localStorage.setItem('tafawuq_1sec_lesson_scores', JSON.stringify(lessonScores));
+            }
+        }
+
+        // ==========================================
+        // 4. التنقل بين الشاشات وعرض البيانات (مادة -> فرع -> درس -> اختبار)
+        // ==========================================
+        function showSection(sectionId) {
+            ['subjectsView', 'branchesView', 'lessonsView', 'quizView', 'summaryView'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goHome() {
+            currentSubject = null;
+            currentBranch = null;
+            currentLesson = null;
+            renderSubjects();
+            showSection('subjectsView');
+        }
+
+        function renderSubjects() {
+            const grid = document.getElementById('subjectsGrid');
+            grid.innerHTML = '';
+
+            curriculumData.forEach(subject => {
+                const totalLessons = subject.branches.reduce((sum, b) => sum + b.lessons.length, 0);
+                const totalQ = subject.branches.reduce((sum, b) => sum + b.lessons.reduce((s, l) => s + l.questions.length, 0), 0);
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-3xl p-6 border border-slate-200 shadow-sm card-hover cursor-pointer flex flex-col justify-between group';
+                card.onclick = () => selectSubject(subject.id);
+
+                card.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${subject.colorFrom} ${subject.colorTo} text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                                <i data-lucide="${subject.icon}" class="w-7 h-7"></i>
+                            </div>
+                            <span class="text-xs font-extrabold px-3 py-1 rounded-full border ${subject.badgeBg}">
+                                ${subject.branches.length} فروع • ${totalLessons} دروس
+                            </span>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors">${subject.title}</h4>
+                            <p class="text-sm text-slate-500 font-medium mt-1">${subject.subtitle}</p>
+                        </div>
+                    </div>
+                    <div class="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between text-sm font-bold text-indigo-600">
+                        <span>تصفح الفروع (${totalQ} سؤال)</span>
+                        <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function selectSubject(subjectId) {
+            currentSubject = curriculumData.find(s => s.id === subjectId);
+            if (!currentSubject) return;
+
+            document.getElementById('branchBreadcrumbSubject').textContent = currentSubject.title;
+            document.getElementById('branchesViewTitle').innerHTML = `
+                <span class="w-2 h-7 bg-indigo-600 rounded-full inline-block"></span>
+                فروع ووحدات مادة ${currentSubject.title}
+            `;
+            renderBranches();
+            showSection('branchesView');
+        }
+
+        function renderBranches() {
+            const grid = document.getElementById('branchesGrid');
+            grid.innerHTML = '';
+
+            currentSubject.branches.forEach(branch => {
+                const totalQ = branch.lessons.reduce((sum, l) => sum + l.questions.length, 0);
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-3xl p-6 border border-slate-200 shadow-sm card-hover cursor-pointer flex flex-col justify-between group';
+                card.onclick = () => selectBranch(branch.id);
+
+                card.innerHTML = `
+                    <div class="space-y-3.5">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                <i data-lucide="${branch.icon || 'folder-open'}" class="w-6 h-6"></i>
+                            </div>
+                            <span class="text-xs font-extrabold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+                                ${branch.lessons.length} ${branch.lessons.length === 1 ? 'درس' : (branch.lessons.length === 2 ? 'درسان' : 'دروس')}
+                            </span>
+                        </div>
+                        <div>
+                            <h4 class="text-lg sm:text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
+                                ${branch.title}
+                            </h4>
+                            <p class="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                                ${branch.description}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm font-bold text-indigo-600">
+                        <span>عرض الدروس (${totalQ} سؤال)</span>
+                        <span class="inline-flex items-center gap-1 group-hover:translate-x-[-4px] transition-transform">
+                            دخول
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        </span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function backToBranches() {
+            if (currentSubject) {
+                currentBranch = null;
+                renderBranches();
+                showSection('branchesView');
+            } else {
+                goHome();
+            }
+        }
+
+        function selectBranch(branchId) {
+            currentBranch = currentSubject.branches.find(b => b.id === branchId);
+            if (!currentBranch) return;
+
+            document.getElementById('lessonBreadcrumbSubject').textContent = currentSubject.title;
+            document.getElementById('lessonBreadcrumbBranch').textContent = currentBranch.title;
+            document.getElementById('lessonsViewHeading').innerHTML = `
+                <span class="w-2 h-7 bg-indigo-600 rounded-full inline-block"></span>
+                دروس ${currentBranch.title}
+            `;
+
+            renderLessons();
+            showSection('lessonsView');
+        }
+
+        function renderLessons() {
+            const grid = document.getElementById('lessonsGrid');
+            grid.innerHTML = '';
+
+            currentBranch.lessons.forEach((lesson, index) => {
+                const saved = lessonScores[lesson.id];
+                const maxCoins = lesson.questions.length * 5;
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-3xl p-6 border border-slate-200 shadow-sm card-hover cursor-pointer flex flex-col justify-between group';
+                card.onclick = () => startLesson(lesson.id);
+
+                const scoreBadge = saved
+                    ? `<span class="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                           <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                           أعلى نتيجة: ${saved.coins}/${maxCoins} كوين (${saved.accuracy}%)
+                       </span>`
+                    : `<span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                           <i data-lucide="coins" class="w-3.5 h-3.5"></i>
+                           الجائزة: ${maxCoins} كوين
+                       </span>`;
+
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 font-black flex items-center justify-center text-sm">
+                                ${index + 1}
+                            </span>
+                            ${scoreBadge}
+                        </div>
+                        <h4 class="text-lg font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
+                            ${lesson.title}
+                        </h4>
+                        <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                            ${lesson.description}
+                        </p>
+                    </div>
+                    <div class="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400">${lesson.questions.length} أسئلة اختيار من متعدد</span>
+                        <span class="inline-flex items-center gap-1.5 text-sm font-extrabold text-indigo-600 group-hover:translate-x-[-4px] transition-transform">
+                            ابدأ حل الدرس
+                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        </span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function backToLessons() {
+            if (currentBranch) {
+                renderLessons();
+                showSection('lessonsView');
+            } else if (currentSubject) {
+                backToBranches();
+            } else {
+                goHome();
+            }
+        }
+
+        // ==========================================
+        // 5. منطق الاختبار والأسئلة والتفاعل
+        // ==========================================
+        function startLesson(lessonId) {
+            currentLesson = currentBranch.lessons.find(l => l.id === lessonId);
+            if (!currentLesson) return;
+
+            // نسخ الأسئلة وترتيبها
+            currentQuestions = [...currentLesson.questions];
+            currentQuestionIndex = 0;
+            sessionCoins = 0;
+            correctAnswersCount = 0;
+            wrongAnswersCount = 0;
+
+            document.getElementById('quizBreadcrumbSubject').textContent = currentSubject.title;
+            document.getElementById('quizBreadcrumbBranch').textContent = currentBranch.title;
+            document.getElementById('quizLessonTitle').textContent = currentLesson.title;
+            document.getElementById('sessionCoinsDisplay').textContent = '0';
+            document.getElementById('totalQuestionsNum').textContent = currentQuestions.length;
+
+            showSection('quizView');
+            renderQuestion();
+        }
+
+        function restartLesson() {
+            if (currentLesson) {
+                startLesson(currentLesson.id);
+            }
+        }
+
+        function renderQuestion() {
+            isAnswered = false;
+            const qObj = currentQuestions[currentQuestionIndex];
+            const total = currentQuestions.length;
+            const currentNum = currentQuestionIndex + 1;
+
+            // تحديث شريط التقدم
+            document.getElementById('currentQuestionNum').textContent = currentNum;
+            const percent = Math.round((currentNum / total) * 100);
+            document.getElementById('progressPercent').textContent = `${percent}%`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+
+            // عرض نص السؤال (مع مراعاة اتجاه اللغة الإنجليزية إن وجدت)
+            const qTextEl = document.getElementById('questionText');
+            qTextEl.textContent = qObj.q;
+            if (currentSubject.id === 'english') {
+                qTextEl.classList.add('ltr-text', 'text-left');
+                qTextEl.classList.remove('text-right');
+            } else {
+                qTextEl.classList.remove('ltr-text', 'text-left');
+                qTextEl.classList.add('text-right');
+            }
+
+            // إخفاء التغذية الراجعة وزر التالي
+            const feedbackBox = document.getElementById('feedbackBox');
+            feedbackBox.classList.add('hidden');
+            document.getElementById('nextBtnContainer').classList.add('hidden');
+
+            // تحديث نص زر التالي في السؤال الأخير
+            document.getElementById('nextBtnText').textContent = 
+                (currentQuestionIndex === total - 1) ? 'عرض النتيجة النهائية' : 'السؤال التالي';
+
+            // بناء أزرار الاختيارات
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            const letters = ['أ', 'ب', 'ج', 'د'];
+            const enLetters = ['A', 'B', 'C', 'D'];
+
+            qObj.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                const isEng = currentSubject.id === 'english';
+                btn.className = `option-btn w-full p-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 hover:bg-indigo-50/60 hover:border-indigo-300 transition-all flex items-center gap-3.5 text-base sm:text-lg font-bold text-slate-800 focus:outline-none ${isEng ? 'ltr-text text-left' : 'text-right'}`;
+                btn.onclick = () => handleAnswer(idx, btn);
+
+                const badgeLetter = isEng ? enLetters[idx] : letters[idx];
+
+                btn.innerHTML = `
+                    <span class="option-badge w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-600 font-black flex items-center justify-center shrink-0 text-sm shadow-sm">
+                        ${badgeLetter}
+                    </span>
+                    <span class="flex-grow">${optText}</span>
+                    <span class="option-status-icon shrink-0"></span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selectedIndex, selectedBtn) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const qObj = currentQuestions[currentQuestionIndex];
+            const isCorrect = (selectedIndex === qObj.correct);
+            const allBtns = document.querySelectorAll('.option-btn');
+
+            // تعطيل جميع الأزرار
+            allBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-indigo-50/60', 'hover:border-indigo-300');
+                btn.classList.add('cursor-default');
+            });
+
+            const feedbackBox = document.getElementById('feedbackBox');
+            const feedbackIcon = document.getElementById('feedbackIcon');
+            const feedbackTitle = document.getElementById('feedbackTitle');
+            const feedbackExplanation = document.getElementById('feedbackExplanation');
+
+            if (isCorrect) {
+                // إجابة صحيحة
+                correctAnswersCount++;
+                sessionCoins += 5;
+                totalCoins += 5;
+                updateCoinsUI(true);
+                document.getElementById('sessionCoinsDisplay').textContent = sessionCoins;
+
+                // تلوين الزر الصحيح بالأخضر
+                selectedBtn.classList.remove('border-slate-200', 'bg-slate-50/50');
+                selectedBtn.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-950');
+                selectedBtn.querySelector('.option-badge').classList.add('bg-emerald-500', 'text-white', 'border-emerald-500');
+                selectedBtn.querySelector('.option-status-icon').innerHTML = `<i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-600"></i>`;
+
+                // صندوق التغذية الراجعة الأخضر
+                feedbackBox.className = 'rounded-2xl p-5 border-2 border-emerald-300 bg-emerald-50/80 text-emerald-950 block';
+                feedbackIcon.className = 'w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm';
+                feedbackIcon.innerHTML = `<i data-lucide="party-popper" class="w-6 h-6"></i>`;
+                feedbackTitle.textContent = 'إجابة صحيحة وممتازة! +5 كوينات 🎉';
+                feedbackTitle.className = 'font-black text-base sm:text-lg text-emerald-800';
+                feedbackExplanation.textContent = qObj.explanation;
+
+                // تشغيل صوت الاحتفال وتأثير Confetti
+                playCelebrationSound();
+                triggerConfetti();
+
+            } else {
+                // إجابة خاطئة
+                wrongAnswersCount++;
+                playWrongSound();
+
+                // تلوين الإجابة الخاطئة بالأحمر مع اهتزاز
+                selectedBtn.classList.remove('border-slate-200', 'bg-slate-50/50');
+                selectedBtn.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-950', 'animate-shake');
+                selectedBtn.querySelector('.option-badge').classList.add('bg-rose-500', 'text-white', 'border-rose-500');
+                selectedBtn.querySelector('.option-status-icon').innerHTML = `<i data-lucide="x-circle" class="w-6 h-6 text-rose-600"></i>`;
+
+                // تحديد الإجابة الصحيحة بالأخضر
+                const correctBtn = allBtns[qObj.correct];
+                correctBtn.classList.remove('border-slate-200', 'bg-slate-50/50');
+                correctBtn.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-950');
+                correctBtn.querySelector('.option-badge').classList.add('bg-emerald-500', 'text-white', 'border-emerald-500');
+                correctBtn.querySelector('.option-status-icon').innerHTML = `<i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-600"></i>`;
+
+                // صندوق التغذية الراجعة باللون البرتقالي/الأحمر الهادئ مع الإجابة الصحيحة والشرح
+                feedbackBox.className = 'rounded-2xl p-5 border-2 border-rose-300 bg-rose-50/70 text-slate-900 block';
+                feedbackIcon.className = 'w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm';
+                feedbackIcon.innerHTML = `<i data-lucide="lightbulb" class="w-6 h-6"></i>`;
+                feedbackTitle.textContent = 'إجابة غير صحيحة — إليك الإجابة الصحيحة والشرح:';
+                feedbackTitle.className = 'font-black text-base sm:text-lg text-rose-800';
+                
+                const correctText = qObj.options[qObj.correct];
+                feedbackExplanation.innerHTML = `
+                    <span class="inline-block font-extrabold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-lg mb-1.5">
+                        الإجابة الصحيحة: ${correctText}
+                    </span><br>
+                    <span class="text-slate-700">${qObj.explanation}</span>
+                `;
+            }
+
+            // إظهار زر التالي وتحديث الأيقونات
+            document.getElementById('nextBtnContainer').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 65,
+                    spread: 70,
+                    origin: { y: 0.65 },
+                    colors: ['#10b981', '#f59e0b', '#6366f1', '#ec4899']
+                });
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                showSummary();
+            }
+        }
+
+        function showSummary() {
+            const total = currentQuestions.length;
+            const accuracy = Math.round((correctAnswersCount / total) * 100);
+
+            saveLessonScore(currentLesson.id, sessionCoins, accuracy);
+
+            document.getElementById('summaryLessonName').textContent = currentLesson.title;
+            document.getElementById('summaryCorrectCount').textContent = correctAnswersCount;
+            document.getElementById('summaryWrongCount').textContent = wrongAnswersCount;
+            document.getElementById('summaryEarnedCoins').textContent = sessionCoins;
+            document.getElementById('summaryAccuracy').textContent = `${accuracy}%`;
+            
+            setTimeout(() => {
+                document.getElementById('summaryAccuracyBar').style.width = `${accuracy}%`;
+            }, 150);
+
+            showSection('summaryView');
+
+            if (accuracy >= 50) {
+                playCelebrationSound();
+                triggerConfetti();
+            }
+        }
+
+        // ==========================================
+        // 6. تهيئة التطبيق عند التحميل
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCoinsUI(false);
+            renderSubjects();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
+```
